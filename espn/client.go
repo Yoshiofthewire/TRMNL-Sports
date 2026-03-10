@@ -383,34 +383,48 @@ func GetUpcomingFromSchedule(sr *ScheduleResponse, teamAbbr string) *TeamGame {
 }
 
 // GetRaceEvents extracts the most recent completed race and next upcoming race
-// from a racing scoreboard response.
+// from a racing scoreboard response. It looks for the "Race" competition within
+// each event to get the correct race date and winner.
 func GetRaceEvents(sb *ScoreboardResponse) (lastRace, nextRace *RaceEvent) {
 	now := time.Now()
 	for _, event := range sb.Events {
-		eventDate, _ := time.Parse(time.RFC3339, event.Date)
+		// Find the Race competition for the correct date and winner.
+		// Racing events have multiple competitions: FP1, FP2, FP3/Sprint, Qual, Race.
+		var raceComp *Competition
+		for i := range event.Competitions {
+			if event.Competitions[i].Type.Abbreviation == "Race" {
+				raceComp = &event.Competitions[i]
+				break
+			}
+		}
+
+		// Use the Race competition date if available, otherwise fall back to event date.
+		var raceDate time.Time
+		if raceComp != nil {
+			raceDate, _ = time.Parse(time.RFC3339, raceComp.Date)
+		}
+		if raceDate.IsZero() {
+			raceDate, _ = time.Parse(time.RFC3339, event.Date)
+		}
 
 		circuit := ""
 		winner := ""
-		if len(event.Competitions) > 0 {
-			comp := event.Competitions[0]
-			circuit = comp.Venue.FullName
-			if event.Status.Type.State == "post" {
-				for _, c := range comp.Competitors {
-					if c.Winner {
-						if c.Athlete.DisplayName != "" {
-							winner = c.Athlete.DisplayName
-						} else if c.Team.DisplayName != "" {
-							winner = c.Team.DisplayName
-						}
-						break
-					}
+		if raceComp != nil {
+			circuit = raceComp.Venue.FullName
+			// Winner is the first-order competitor in the Race competition.
+			if event.Status.Type.State == "post" && len(raceComp.Competitors) > 0 {
+				top := raceComp.Competitors[0]
+				if top.Athlete.DisplayName != "" {
+					winner = top.Athlete.DisplayName
+				} else if top.Team.DisplayName != "" {
+					winner = top.Team.DisplayName
 				}
 			}
 		}
 
 		re := &RaceEvent{
 			EventID:    event.ID,
-			Date:       eventDate,
+			Date:       raceDate,
 			RaceName:   event.Name,
 			Circuit:    circuit,
 			Status:     event.Status.Type.State,
@@ -422,7 +436,7 @@ func GetRaceEvents(sb *ScoreboardResponse) (lastRace, nextRace *RaceEvent) {
 			if lastRace == nil || re.Date.After(lastRace.Date) {
 				lastRace = re
 			}
-		} else if event.Status.Type.State == "pre" && eventDate.After(now) {
+		} else if event.Status.Type.State == "pre" && raceDate.After(now) {
 			if nextRace == nil || re.Date.Before(nextRace.Date) {
 				nextRace = re
 			}

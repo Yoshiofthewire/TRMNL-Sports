@@ -66,9 +66,17 @@ func (st *SeasonType) UnmarshalJSON(data []byte) error {
 
 // Competition holds the two competitors and venue info.
 type Competition struct {
-	Competitors []Competitor `json:"competitors"`
-	Venue       Venue        `json:"venue"`
-	StartDate   string       `json:"startDate"`
+	Type        CompetitionType `json:"type"`
+	Competitors []Competitor     `json:"competitors"`
+	Venue       Venue            `json:"venue"`
+	Date        string           `json:"date"`
+	StartDate   string           `json:"startDate"`
+}
+
+// CompetitionType identifies the kind of competition (e.g. Race, Qual, FP1).
+type CompetitionType struct {
+	ID           string `json:"id"`
+	Abbreviation string `json:"abbreviation"`
 }
 
 // Competitor is one side of a game (home or away), or a driver entry in racing.
