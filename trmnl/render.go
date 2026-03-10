@@ -13,6 +13,13 @@ type SportSection struct {
 	SportName string
 	SportKey  string // ESPN league key, used for icon lookup
 	TeamData  []TeamDisplay
+	RaceData  *RaceDisplay // non-nil for racing series
+}
+
+// RaceDisplay holds the last result and next race for a racing series.
+type RaceDisplay struct {
+	LastRace *espn.RaceEvent
+	NextRace *espn.RaceEvent
 }
 
 // TeamDisplay holds the last result and next game for one team.
@@ -95,16 +102,26 @@ func renderFull(sections []SportSection) string {
 		icon     string
 		teamAbbr string
 		game     *espn.TeamGame
+		isRace   bool
+		race     *espn.RaceEvent
 	}
 	var scores, upcoming []row
 	for _, sec := range sections {
 		icon := SportIcon(sec.SportKey)
 		for _, td := range sec.TeamData {
 			if td.LastGame != nil {
-				scores = append(scores, row{icon, td.TeamAbbr, td.LastGame})
+				scores = append(scores, row{icon: icon, teamAbbr: td.TeamAbbr, game: td.LastGame})
 			}
 			if td.NextGame != nil {
-				upcoming = append(upcoming, row{icon, td.TeamAbbr, td.NextGame})
+				upcoming = append(upcoming, row{icon: icon, teamAbbr: td.TeamAbbr, game: td.NextGame})
+			}
+		}
+		if sec.RaceData != nil {
+			if sec.RaceData.LastRace != nil {
+				scores = append(scores, row{icon: icon, teamAbbr: sec.SportName, isRace: true, race: sec.RaceData.LastRace})
+			}
+			if sec.RaceData.NextRace != nil {
+				upcoming = append(upcoming, row{icon: icon, teamAbbr: sec.SportName, isRace: true, race: sec.RaceData.NextRace})
 			}
 		}
 	}
@@ -126,6 +143,21 @@ func renderFull(sections []SportSection) string {
       <tbody>
 `)
 		for _, r := range scores {
+			if r.isRace {
+				winner := r.race.Winner
+				if winner == "" {
+					winner = "—"
+				}
+				scoresHTML.WriteString(fmt.Sprintf(`        <tr>
+          <td>%s</td>
+          <td><span class="label">%s</span></td>
+          <td><span class="label label--small">%s</span></td>
+          <td><span class="label label--small">%s</span></td>
+          <td><span class="label label--small">%s</span></td>
+        </tr>
+`, r.icon, esc(r.teamAbbr), esc(r.race.RaceName), esc(winner), r.race.Date.Format("Mon 1/2")))
+				continue
+			}
 			prefix := "vs"
 			if !r.game.IsHome {
 				prefix = "@"
@@ -172,6 +204,20 @@ func renderFull(sections []SportSection) string {
       <tbody>
 `)
 		for _, r := range upcoming {
+			if r.isRace {
+				circuit := r.race.Circuit
+				if circuit == "" {
+					circuit = r.race.RaceName
+				}
+				upcomingHTML.WriteString(fmt.Sprintf(`        <tr>
+          <td>%s</td>
+          <td><span class="label">%s</span></td>
+          <td><span class="label label--small">%s</span></td>
+          <td><span class="label label--small">%s</span></td>
+        </tr>
+`, r.icon, esc(r.teamAbbr), esc(circuit), r.race.Date.Format("Mon 1/2 3:04PM")))
+				continue
+			}
 			prefix := "vs"
 			if !r.game.IsHome {
 				prefix = "@"
@@ -219,16 +265,26 @@ func renderHalfHorizontal(sections []SportSection) string {
 		icon     string
 		teamAbbr string
 		game     *espn.TeamGame
+		isRace   bool
+		race     *espn.RaceEvent
 	}
 	var scores, upcoming []row
 	for _, sec := range sections {
 		icon := SportIcon(sec.SportKey)
 		for _, td := range sec.TeamData {
 			if td.LastGame != nil {
-				scores = append(scores, row{icon, td.TeamAbbr, td.LastGame})
+				scores = append(scores, row{icon: icon, teamAbbr: td.TeamAbbr, game: td.LastGame})
 			}
 			if td.NextGame != nil {
-				upcoming = append(upcoming, row{icon, td.TeamAbbr, td.NextGame})
+				upcoming = append(upcoming, row{icon: icon, teamAbbr: td.TeamAbbr, game: td.NextGame})
+			}
+		}
+		if sec.RaceData != nil {
+			if sec.RaceData.LastRace != nil {
+				scores = append(scores, row{icon: icon, teamAbbr: sec.SportName, isRace: true, race: sec.RaceData.LastRace})
+			}
+			if sec.RaceData.NextRace != nil {
+				upcoming = append(upcoming, row{icon: icon, teamAbbr: sec.SportName, isRace: true, race: sec.RaceData.NextRace})
 			}
 		}
 	}
@@ -240,6 +296,20 @@ func renderHalfHorizontal(sections []SportSection) string {
       <tbody>
 `)
 		for _, r := range scores {
+			if r.isRace {
+				winner := r.race.Winner
+				if winner == "" {
+					winner = "—"
+				}
+				scoresHTML.WriteString(fmt.Sprintf(`        <tr>
+          <td>%s</td>
+          <td><span class="label">%s</span></td>
+          <td><span class="label label--small">%s</span></td>
+          <td><span class="label label--small">%s</span></td>
+        </tr>
+`, r.icon, esc(r.teamAbbr), esc(r.race.RaceName), esc(winner)))
+				continue
+			}
 			prefix := "vs"
 			if !r.game.IsHome {
 				prefix = "@"
@@ -272,6 +342,20 @@ func renderHalfHorizontal(sections []SportSection) string {
       <tbody>
 `)
 		for _, r := range upcoming {
+			if r.isRace {
+				circuit := r.race.Circuit
+				if circuit == "" {
+					circuit = r.race.RaceName
+				}
+				upcomingHTML.WriteString(fmt.Sprintf(`        <tr>
+          <td>%s</td>
+          <td><span class="label">%s</span></td>
+          <td><span class="label label--small">%s</span></td>
+          <td><span class="label label--small">%s</span></td>
+        </tr>
+`, r.icon, esc(r.teamAbbr), esc(circuit), r.race.Date.Format("Mon 1/2 3:04PM")))
+				continue
+			}
 			prefix := "vs"
 			if !r.game.IsHome {
 				prefix = "@"
@@ -317,16 +401,26 @@ func renderHalfVertical(sections []SportSection) string {
 		sport    string
 		teamAbbr string
 		game     *espn.TeamGame
+		isRace   bool
+		race     *espn.RaceEvent
 	}
 	var scores, upcoming []entry
 	for _, sec := range sections {
 		icon := SportIcon(sec.SportKey)
 		for _, td := range sec.TeamData {
 			if td.LastGame != nil {
-				scores = append(scores, entry{icon, sec.SportName, td.TeamAbbr, td.LastGame})
+				scores = append(scores, entry{icon: icon, sport: sec.SportName, teamAbbr: td.TeamAbbr, game: td.LastGame})
 			}
 			if td.NextGame != nil {
-				upcoming = append(upcoming, entry{icon, sec.SportName, td.TeamAbbr, td.NextGame})
+				upcoming = append(upcoming, entry{icon: icon, sport: sec.SportName, teamAbbr: td.TeamAbbr, game: td.NextGame})
+			}
+		}
+		if sec.RaceData != nil {
+			if sec.RaceData.LastRace != nil {
+				scores = append(scores, entry{icon: icon, sport: sec.SportName, isRace: true, race: sec.RaceData.LastRace})
+			}
+			if sec.RaceData.NextRace != nil {
+				upcoming = append(upcoming, entry{icon: icon, sport: sec.SportName, isRace: true, race: sec.RaceData.NextRace})
 			}
 		}
 	}
@@ -336,6 +430,21 @@ func renderHalfVertical(sections []SportSection) string {
 		items.WriteString(`        <span class="title title--small" style="margin-bottom:2px">Recent Scores</span>
 `)
 		for _, e := range scores {
+			if e.isRace {
+				winner := e.race.Winner
+				if winner == "" {
+					winner = "—"
+				}
+				items.WriteString(fmt.Sprintf(`        <div class="item">
+          <div class="meta">%s</div>
+          <div class="content">
+            <span class="title title--small">%s</span>
+            <span class="description">%s — %s</span>
+          </div>
+        </div>
+`, e.icon, esc(e.sport), esc(e.race.RaceName), esc(winner)))
+				continue
+			}
 			prefix := "vs"
 			if !e.game.IsHome {
 				prefix = "@"
@@ -365,6 +474,21 @@ func renderHalfVertical(sections []SportSection) string {
 		items.WriteString(`        <span class="title title--small" style="margin-top:4px;margin-bottom:2px">Upcoming</span>
 `)
 		for _, e := range upcoming {
+			if e.isRace {
+				circuit := e.race.Circuit
+				if circuit == "" {
+					circuit = e.race.RaceName
+				}
+				items.WriteString(fmt.Sprintf(`        <div class="item">
+          <div class="meta">%s</div>
+          <div class="content">
+            <span class="title title--small">%s</span>
+            <span class="label label--small">%s — %s</span>
+          </div>
+        </div>
+`, e.icon, esc(e.sport), esc(circuit), e.race.Date.Format("Mon 1/2 3:04PM")))
+				continue
+			}
 			prefix := "vs"
 			if !e.game.IsHome {
 				prefix = "@"
@@ -435,6 +559,25 @@ func renderQuadrant(sections []SportSection) string {
 				items = append(items, entry{icon, sec.SportName, td.TeamAbbr,
 					fmt.Sprintf("%s %s %s", prefix, esc(td.NextGame.OpponentAbbr),
 						td.NextGame.Date.Format("1/2 3:04PM")), false})
+			}
+		}
+		if sec.RaceData != nil {
+			if sec.RaceData.LastRace != nil {
+				winner := sec.RaceData.LastRace.Winner
+				if winner == "" {
+					winner = "Completed"
+				}
+				items = append(items, entry{icon, sec.SportName, sec.SportName,
+					fmt.Sprintf("%s — %s", esc(sec.RaceData.LastRace.RaceName), esc(winner)), true})
+			}
+			if sec.RaceData.NextRace != nil {
+				circuit := sec.RaceData.NextRace.Circuit
+				if circuit == "" {
+					circuit = sec.RaceData.NextRace.RaceName
+				}
+				items = append(items, entry{icon, sec.SportName, sec.SportName,
+					fmt.Sprintf("%s %s", esc(circuit),
+						sec.RaceData.NextRace.Date.Format("1/2 3:04PM")), false})
 			}
 		}
 	}

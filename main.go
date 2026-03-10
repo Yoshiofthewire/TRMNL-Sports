@@ -90,6 +90,22 @@ func fetchAllSections(client *espn.Client, sports []config.ActiveSport) []trmnl.
 
 		log.Printf("%s: ESPN returned %d events", as.Name, len(sb.Events))
 
+		// Racing series — extract race events, no team filtering
+		if as.IsRacing {
+			lastRace, nextRace := espn.GetRaceEvents(sb)
+			if lastRace != nil || nextRace != nil {
+				sections = append(sections, trmnl.SportSection{
+					SportName: as.Name,
+					SportKey:  as.League,
+					RaceData: &trmnl.RaceDisplay{
+						LastRace: lastRace,
+						NextRace: nextRace,
+					},
+				})
+			}
+			continue
+		}
+
 		// Get games for the user's selected teams
 		allGames := espn.GetTeamGames(sb, as.Teams)
 		log.Printf("%s: %d games matched configured teams %v", as.Name, len(allGames), as.Teams)

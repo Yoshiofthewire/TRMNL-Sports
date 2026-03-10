@@ -71,14 +71,22 @@ type Competition struct {
 	StartDate   string       `json:"startDate"`
 }
 
-// Competitor is one side of a game (home or away).
+// Competitor is one side of a game (home or away), or a driver entry in racing.
 type Competitor struct {
 	ID       string        `json:"id"`
 	Team     Team          `json:"team"`
+	Athlete  Athlete       `json:"athlete"`
 	Score    string        `json:"score"`
 	HomeAway string        `json:"homeAway"` // "home" or "away"
 	Winner   bool          `json:"winner"`
 	Records  []RecordEntry `json:"records"`
+	Order    int           `json:"order"` // finishing position in racing
+}
+
+// Athlete identifies a driver or individual competitor (used in racing).
+type Athlete struct {
+	DisplayName      string `json:"displayName"`
+	ShortDisplayName string `json:"shortDisplayName"`
 }
 
 // Team contains team identity info.
@@ -160,4 +168,15 @@ type ScheduleCompetition struct {
 	Competitors       []Competitor `json:"competitors"`
 	Venue             Venue        `json:"venue"`
 	BoxscoreAvailable bool         `json:"boxscoreAvailable"`
+}
+
+// RaceEvent is the normalized representation of a racing event (race weekend).
+type RaceEvent struct {
+	EventID    string
+	Date       time.Time
+	RaceName   string
+	Circuit    string
+	Status     string // "pre", "post", "in"
+	Winner     string // Driver name for completed races
+	StatusDesc string
 }

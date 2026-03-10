@@ -41,10 +41,11 @@ func LoadEnvFile(path string) {
 
 // SportConfig defines one sport's ESPN API path and env var for team selection.
 type SportConfig struct {
-	Name   string // Display name, e.g. "NFL"
-	Sport  string // ESPN sport path segment, e.g. "football"
-	League string // ESPN league path segment, e.g. "nfl"
-	EnvVar string // Environment variable name, e.g. "NFL_TEAMS"
+	Name     string // Display name, e.g. "NFL"
+	Sport    string // ESPN sport path segment, e.g. "football"
+	League   string // ESPN league path segment, e.g. "nfl"
+	EnvVar   string // Environment variable name, e.g. "NFL_TEAMS"
+	IsRacing bool   // true for racing series (boolean toggle, no team selection)
 }
 
 // AllSports lists every supported sport configuration.
@@ -58,6 +59,14 @@ var AllSports = []SportConfig{
 	{Name: "MLS", Sport: "soccer", League: "usa.1", EnvVar: "MLS_TEAMS"},
 	{Name: "EPL", Sport: "soccer", League: "eng.1", EnvVar: "EPL_TEAMS"},
 	{Name: "UFC", Sport: "mma", League: "ufc", EnvVar: "UFC_FIGHTERS"},
+	{Name: "IndyCar", Sport: "racing", League: "irl", EnvVar: "INDYCAR", IsRacing: true},
+	{Name: "IndyNXT", Sport: "racing", League: "indy_nxt", EnvVar: "INDYNXT", IsRacing: true},
+	{Name: "NASCAR", Sport: "racing", League: "nascar", EnvVar: "NASCAR", IsRacing: true},
+	{Name: "Formula E", Sport: "racing", League: "formula-e", EnvVar: "FORMULA_E", IsRacing: true},
+	{Name: "Formula 1", Sport: "racing", League: "f1", EnvVar: "F1", IsRacing: true},
+	{Name: "Formula 2", Sport: "racing", League: "f2", EnvVar: "F2", IsRacing: true},
+	{Name: "Formula 3", Sport: "racing", League: "f3", EnvVar: "F3", IsRacing: true},
+	{Name: "F1 Academy", Sport: "racing", League: "f1-academy", EnvVar: "F1_ACADEMY", IsRacing: true},
 }
 
 // ActiveSport is a sport that has at least one team configured.
@@ -72,6 +81,12 @@ func LoadActiveSports() []ActiveSport {
 	for _, sc := range AllSports {
 		raw := strings.TrimSpace(os.Getenv(sc.EnvVar))
 		if raw == "" {
+			continue
+		}
+		if sc.IsRacing {
+			if strings.EqualFold(raw, "true") || raw == "1" {
+				active = append(active, ActiveSport{SportConfig: sc})
+			}
 			continue
 		}
 		parts := strings.Split(raw, ",")

@@ -16,6 +16,8 @@ func SportIcon(leagueKey string) string {
 		return svgSoccerBall
 	case "ufc":
 		return svgFist
+	case "f1", "f2", "f3", "f1-academy", "formula-e", "irl", "indy_nxt", "nascar":
+		return svgRacingFlag
 	default:
 		return svgGenericBall
 	}
@@ -69,6 +71,12 @@ const svgSoccerBall = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height
 // MMA fist — simple closed fist outline
 const svgFist = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
   <path d="M7 12V8a2 2 0 0 1 4 0v1a2 2 0 0 1 4 0v1a2 2 0 0 1 4 0v4c0 4-3 6-6 7H9c-3-1-5-4-5-7v-2a2 2 0 0 1 3 0"/>
+</svg>`
+
+// Racing flag — flag icon for motorsports
+const svgRacingFlag = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+  <line x1="4" y1="22" x2="4" y2="15"/>
 </svg>`
 
 // Generic ball fallback

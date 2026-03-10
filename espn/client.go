@@ -381,3 +381,52 @@ func GetUpcomingFromSchedule(sr *ScheduleResponse, teamAbbr string) *TeamGame {
 
 	return best
 }
+
+// GetRaceEvents extracts the most recent completed race and next upcoming race
+// from a racing scoreboard response.
+func GetRaceEvents(sb *ScoreboardResponse) (lastRace, nextRace *RaceEvent) {
+	now := time.Now()
+	for _, event := range sb.Events {
+		eventDate, _ := time.Parse(time.RFC3339, event.Date)
+
+		circuit := ""
+		winner := ""
+		if len(event.Competitions) > 0 {
+			comp := event.Competitions[0]
+			circuit = comp.Venue.FullName
+			if event.Status.Type.State == "post" {
+				for _, c := range comp.Competitors {
+					if c.Winner {
+						if c.Athlete.DisplayName != "" {
+							winner = c.Athlete.DisplayName
+						} else if c.Team.DisplayName != "" {
+							winner = c.Team.DisplayName
+						}
+						break
+					}
+				}
+			}
+		}
+
+		re := &RaceEvent{
+			EventID:    event.ID,
+			Date:       eventDate,
+			RaceName:   event.Name,
+			Circuit:    circuit,
+			Status:     event.Status.Type.State,
+			Winner:     winner,
+			StatusDesc: event.Status.Type.Description,
+		}
+
+		if event.Status.Type.State == "post" {
+			if lastRace == nil || re.Date.After(lastRace.Date) {
+				lastRace = re
+			}
+		} else if event.Status.Type.State == "pre" && eventDate.After(now) {
+			if nextRace == nil || re.Date.Before(nextRace.Date) {
+				nextRace = re
+			}
+		}
+	}
+	return
+}
