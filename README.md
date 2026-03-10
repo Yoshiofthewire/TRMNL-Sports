@@ -86,5 +86,10 @@ After saving the plugin, click **"Edit Markup"** and enter the following in each
 | `MLS_TEAMS`     | No       | Comma-separated ESPN team abbreviations for MLS                   | `ATL,LAFC`            |
 | `EPL_TEAMS`     | No       | Comma-separated ESPN team abbreviations for Premier League        | `LIV,ARS`             |
 | `UFC_FIGHTERS`  | No       | Comma-separated ESPN fighter IDs or names for UFC                 | *(TBD per ESPN API)*  |
+| `INDYCAR`       | No       | Set to `true` to show IndyCar races                               | `true`                |
+| `NASCAR`        | No       | Set to `true` to show NASCAR Cup races                            | `true`                |
+| `NASCAR_XFINITY`| No       | Set to `true` to show NASCAR Xfinity races                        | `true`                |
+| `NASCAR_TRUCK`  | No       | Set to `true` to show NASCAR Truck races                          | `true`                |
+| `F1`            | No       | Set to `true` to show Formula 1 races                             | `true`                |
 
 At least one team/sport variable must be set for the plugin to return data.

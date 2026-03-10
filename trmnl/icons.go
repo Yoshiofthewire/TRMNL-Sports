@@ -16,7 +16,7 @@ func SportIcon(leagueKey string) string {
 		return svgSoccerBall
 	case "ufc":
 		return svgFist
-	case "f1", "f2", "f3", "f1-academy", "formula-e", "irl", "indy_nxt", "nascar":
+	case "f1", "irl", "nascar-premier", "nascar-secondary", "nascar-truck":
 		return svgRacingFlag
 	default:
 		return svgGenericBall

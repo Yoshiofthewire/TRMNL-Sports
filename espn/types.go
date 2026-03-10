@@ -84,11 +84,35 @@ type Competitor struct {
 	ID       string        `json:"id"`
 	Team     Team          `json:"team"`
 	Athlete  Athlete       `json:"athlete"`
-	Score    string        `json:"score"`
+	Score    FlexScore     `json:"score"`
 	HomeAway string        `json:"homeAway"` // "home" or "away"
 	Winner   bool          `json:"winner"`
 	Records  []RecordEntry `json:"records"`
 	Order    int           `json:"order"` // finishing position in racing
+}
+
+// FlexScore handles score fields that can be either a string ("24") or an
+// object ({"value":24.0,"displayValue":"24"}) depending on the ESPN endpoint.
+type FlexScore string
+
+func (fs *FlexScore) UnmarshalJSON(data []byte) error {
+	// Try string first
+	var s string
+	if err := json.Unmarshal(data, &s); err == nil {
+		*fs = FlexScore(s)
+		return nil
+	}
+	// Try object with displayValue
+	var obj struct {
+		DisplayValue string `json:"displayValue"`
+	}
+	if err := json.Unmarshal(data, &obj); err == nil {
+		*fs = FlexScore(obj.DisplayValue)
+		return nil
+	}
+	// Fallback: empty
+	*fs = ""
+	return nil
 }
 
 // Athlete identifies a driver or individual competitor (used in racing).

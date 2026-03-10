@@ -60,13 +60,10 @@ var AllSports = []SportConfig{
 	{Name: "EPL", Sport: "soccer", League: "eng.1", EnvVar: "EPL_TEAMS"},
 	{Name: "UFC", Sport: "mma", League: "ufc", EnvVar: "UFC_FIGHTERS"},
 	{Name: "IndyCar", Sport: "racing", League: "irl", EnvVar: "INDYCAR", IsRacing: true},
-	{Name: "IndyNXT", Sport: "racing", League: "indy_nxt", EnvVar: "INDYNXT", IsRacing: true},
-	{Name: "NASCAR", Sport: "racing", League: "nascar", EnvVar: "NASCAR", IsRacing: true},
-	{Name: "Formula E", Sport: "racing", League: "formula-e", EnvVar: "FORMULA_E", IsRacing: true},
+	{Name: "NASCAR Cup", Sport: "racing", League: "nascar-premier", EnvVar: "NASCAR", IsRacing: true},
+	{Name: "NASCAR Xfinity", Sport: "racing", League: "nascar-secondary", EnvVar: "NASCAR_XFINITY", IsRacing: true},
+	{Name: "NASCAR Truck", Sport: "racing", League: "nascar-truck", EnvVar: "NASCAR_TRUCK", IsRacing: true},
 	{Name: "Formula 1", Sport: "racing", League: "f1", EnvVar: "F1", IsRacing: true},
-	{Name: "Formula 2", Sport: "racing", League: "f2", EnvVar: "F2", IsRacing: true},
-	{Name: "Formula 3", Sport: "racing", League: "f3", EnvVar: "F3", IsRacing: true},
-	{Name: "F1 Academy", Sport: "racing", League: "f1-academy", EnvVar: "F1_ACADEMY", IsRacing: true},
 }
 
 // ActiveSport is a sport that has at least one team configured.
