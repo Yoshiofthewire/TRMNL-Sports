@@ -11,6 +11,16 @@ import (
 
 const baseURL = "https://site.api.espn.com/apis/site/v2/sports"
 
+// parseESPNDate parses ESPN date strings which may or may not include seconds.
+// ESPN returns dates like "2026-03-06T01:30Z" (no seconds) or "2026-03-06T01:30:00Z".
+func parseESPNDate(s string) (time.Time, error) {
+	t, err := time.Parse(time.RFC3339, s)
+	if err == nil {
+		return t, nil
+	}
+	return time.Parse("2006-01-02T15:04Z", s)
+}
+
 // Client fetches and caches ESPN scoreboard data.
 type Client struct {
 	httpClient    *http.Client
@@ -148,7 +158,7 @@ func GetTeamGames(sb *ScoreboardResponse, teamAbbrs []string) []TeamGame {
 			continue
 		}
 
-		eventDate, _ := time.Parse(time.RFC3339, event.Date)
+		eventDate, _ := parseESPNDate(event.Date)
 
 		for _, competitor := range comp.Competitors {
 			abbr := strings.ToUpper(competitor.Team.Abbreviation)
@@ -232,7 +242,7 @@ func GetPlayoffGames(sb *ScoreboardResponse) []TeamGame {
 			continue
 		}
 
-		eventDate, _ := time.Parse(time.RFC3339, event.Date)
+		eventDate, _ := parseESPNDate(event.Date)
 		home := comp.Competitors[0]
 		away := comp.Competitors[1]
 		if home.HomeAway != "home" {
@@ -327,13 +337,9 @@ func GetUpcomingFromSchedule(sr *ScheduleResponse, teamAbbr string) *TeamGame {
 			continue
 		}
 
-		eventDate, err := time.Parse(time.RFC3339, event.Date)
+		eventDate, err := parseESPNDate(event.Date)
 		if err != nil {
-			// Try alternate format without timezone offset
-			eventDate, err = time.Parse("2006-01-02T15:04Z", event.Date)
-			if err != nil {
-				continue
-			}
+			continue
 		}
 
 		// Must be in the future
@@ -389,7 +395,8 @@ func GetRaceEvents(sb *ScoreboardResponse) (lastRace, nextRace *RaceEvent) {
 	now := time.Now()
 	for _, event := range sb.Events {
 		// Find the Race competition for the correct date and winner.
-		// Racing events have multiple competitions: FP1, FP2, FP3/Sprint, Qual, Race.
+		// F1 events have multiple competitions: FP1, FP2, FP3/Sprint, Qual, Race.
+		// IndyCar/NASCAR have a single competition with no type abbreviation.
 		var raceComp *Competition
 		for i := range event.Competitions {
 			if event.Competitions[i].Type.Abbreviation == "Race" {
@@ -397,14 +404,18 @@ func GetRaceEvents(sb *ScoreboardResponse) (lastRace, nextRace *RaceEvent) {
 				break
 			}
 		}
+		// Fallback: use the last (or only) competition for series without a "Race" type.
+		if raceComp == nil && len(event.Competitions) > 0 {
+			raceComp = &event.Competitions[len(event.Competitions)-1]
+		}
 
 		// Use the Race competition date if available, otherwise fall back to event date.
 		var raceDate time.Time
 		if raceComp != nil {
-			raceDate, _ = time.Parse(time.RFC3339, raceComp.Date)
+			raceDate, _ = parseESPNDate(raceComp.Date)
 		}
 		if raceDate.IsZero() {
-			raceDate, _ = time.Parse(time.RFC3339, event.Date)
+			raceDate, _ = parseESPNDate(event.Date)
 		}
 
 		circuit := ""
