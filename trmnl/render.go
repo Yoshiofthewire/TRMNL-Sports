@@ -72,13 +72,21 @@ func BuildTeamDisplay(teamAbbr string, games []espn.TeamGame) TeamDisplay {
 	return td
 }
 
+// fmtTime formats a time.Time in the given location with the specified layout.
+func fmtTime(t time.Time, layout string, loc *time.Location) string {
+	return t.In(loc).Format(layout)
+}
+
 // RenderMarkup generates all four TRMNL layout markups from a list of sport sections.
-func RenderMarkup(sections []SportSection) MarkupResponse {
+func RenderMarkup(sections []SportSection, loc *time.Location) MarkupResponse {
+	if loc == nil {
+		loc = time.UTC
+	}
 	resp := MarkupResponse{
-		Markup:          renderFull(sections),
-		MarkupHalfHoriz: renderHalfHorizontal(sections),
-		MarkupHalfVert:  renderHalfVertical(sections),
-		MarkupQuadrant:  renderQuadrant(sections),
+		Markup:          renderFull(sections, loc),
+		MarkupHalfHoriz: renderHalfHorizontal(sections, loc),
+		MarkupHalfVert:  renderHalfVertical(sections, loc),
+		MarkupQuadrant:  renderQuadrant(sections, loc),
 	}
 	// Also populate merge_variables so the endpoint works with TRMNL
 	// Private Plugin "Polling" strategy, where TRMNL merges variables
@@ -92,7 +100,7 @@ func RenderMarkup(sections []SportSection) MarkupResponse {
 	return resp
 }
 
-func renderFull(sections []SportSection) string {
+func renderFull(sections []SportSection, loc *time.Location) string {
 	if len(sections) == 0 {
 		return noDataMarkup("full")
 	}
@@ -155,7 +163,7 @@ func renderFull(sections []SportSection) string {
           <td><span class="label label--small">%s</span></td>
           <td><span class="label label--small">%s</span></td>
         </tr>
-`, r.icon, esc(r.teamAbbr), esc(r.race.RaceName), esc(winner), r.race.Date.Format("Mon 1/2")))
+`, r.icon, esc(r.teamAbbr), esc(r.race.RaceName), esc(winner), fmtTime(r.race.Date, "Mon 1/2", loc)))
 				continue
 			}
 			prefix := "vs"
@@ -179,7 +187,7 @@ func renderFull(sections []SportSection) string {
         </tr>
 `, r.icon, esc(r.teamAbbr), prefix, esc(r.game.OpponentAbbr),
 				result, esc(r.game.TeamScore), esc(r.game.OpponentScore),
-				r.game.Date.Format("Mon 1/2")))
+				fmtTime(r.game.Date, "Mon 1/2", loc)))
 		}
 		scoresHTML.WriteString(`      </tbody>
     </table>`)
@@ -215,7 +223,7 @@ func renderFull(sections []SportSection) string {
           <td><span class="label label--small">%s</span></td>
           <td><span class="label label--small">%s</span></td>
         </tr>
-`, r.icon, esc(r.teamAbbr), esc(circuit), r.race.Date.Format("Mon 1/2 3:04PM")))
+`, r.icon, esc(r.teamAbbr), esc(circuit), fmtTime(r.race.Date, "Mon 1/2 3:04PM", loc)))
 				continue
 			}
 			prefix := "vs"
@@ -229,7 +237,7 @@ func renderFull(sections []SportSection) string {
           <td><span class="label label--small">%s</span></td>
         </tr>
 `, r.icon, esc(r.teamAbbr), prefix, esc(r.game.OpponentAbbr),
-				r.game.Date.Format("Mon 1/2 3:04PM")))
+				fmtTime(r.game.Date, "Mon 1/2 3:04PM", loc)))
 		}
 		upcomingHTML.WriteString(`      </tbody>
     </table>`)
@@ -256,7 +264,7 @@ func renderFull(sections []SportSection) string {
 </div>`, scoresHTML.String(), upcomingHTML.String())
 }
 
-func renderHalfHorizontal(sections []SportSection) string {
+func renderHalfHorizontal(sections []SportSection, loc *time.Location) string {
 	if len(sections) == 0 {
 		return noDataMarkup("half_horizontal")
 	}
@@ -353,7 +361,7 @@ func renderHalfHorizontal(sections []SportSection) string {
           <td><span class="label label--small">%s</span></td>
           <td><span class="label label--small">%s</span></td>
         </tr>
-`, r.icon, esc(r.teamAbbr), esc(circuit), r.race.Date.Format("Mon 1/2 3:04PM")))
+`, r.icon, esc(r.teamAbbr), esc(circuit), fmtTime(r.race.Date, "Mon 1/2 3:04PM", loc)))
 				continue
 			}
 			prefix := "vs"
@@ -367,7 +375,7 @@ func renderHalfHorizontal(sections []SportSection) string {
           <td><span class="label label--small">%s</span></td>
         </tr>
 `, r.icon, esc(r.teamAbbr), prefix, esc(r.game.OpponentAbbr),
-				r.game.Date.Format("Mon 1/2 3:04PM")))
+				fmtTime(r.game.Date, "Mon 1/2 3:04PM", loc)))
 		}
 		upcomingHTML.WriteString(`      </tbody>
     </table>`)
@@ -391,7 +399,7 @@ func renderHalfHorizontal(sections []SportSection) string {
 </div>`, scoresHTML.String(), upcomingHTML.String())
 }
 
-func renderHalfVertical(sections []SportSection) string {
+func renderHalfVertical(sections []SportSection, loc *time.Location) string {
 	if len(sections) == 0 {
 		return noDataMarkup("half_vertical")
 	}
@@ -486,7 +494,7 @@ func renderHalfVertical(sections []SportSection) string {
             <span class="label label--small">%s — %s</span>
           </div>
         </div>
-`, e.icon, esc(e.sport), esc(circuit), e.race.Date.Format("Mon 1/2 3:04PM")))
+`, e.icon, esc(e.sport), esc(circuit), fmtTime(e.race.Date, "Mon 1/2 3:04PM", loc)))
 				continue
 			}
 			prefix := "vs"
@@ -502,7 +510,7 @@ func renderHalfVertical(sections []SportSection) string {
         </div>
 `, e.icon, esc(e.sport), esc(e.teamAbbr),
 				prefix, esc(e.game.OpponentAbbr),
-				e.game.Date.Format("Mon 1/2 3:04PM")))
+				fmtTime(e.game.Date, "Mon 1/2 3:04PM", loc)))
 		}
 	}
 
@@ -521,7 +529,7 @@ func renderHalfVertical(sections []SportSection) string {
 </div>`, items.String())
 }
 
-func renderQuadrant(sections []SportSection) string {
+func renderQuadrant(sections []SportSection, loc *time.Location) string {
 	if len(sections) == 0 {
 		return noDataMarkup("quadrant")
 	}
@@ -558,7 +566,7 @@ func renderQuadrant(sections []SportSection) string {
 				}
 				items = append(items, entry{icon, sec.SportName, td.TeamAbbr,
 					fmt.Sprintf("%s %s %s", prefix, esc(td.NextGame.OpponentAbbr),
-						td.NextGame.Date.Format("1/2 3:04PM")), false})
+						fmtTime(td.NextGame.Date, "1/2 3:04PM", loc)), false})
 			}
 		}
 		if sec.RaceData != nil {
@@ -577,7 +585,7 @@ func renderQuadrant(sections []SportSection) string {
 				}
 				items = append(items, entry{icon, sec.SportName, sec.SportName,
 					fmt.Sprintf("%s %s", esc(circuit),
-						sec.RaceData.NextRace.Date.Format("1/2 3:04PM")), false})
+						fmtTime(sec.RaceData.NextRace.Date, "1/2 3:04PM", loc)), false})
 			}
 		}
 	}

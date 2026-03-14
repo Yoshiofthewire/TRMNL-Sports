@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 )
 
 // LoadEnvFile reads a .env file and sets any variables not already in the environment.
@@ -108,4 +109,19 @@ func ListenAddr() string {
 		return "0.0.0.0:8080"
 	}
 	return addr
+}
+
+// LoadTimezone returns the *time.Location configured via the TIMEZONE env var.
+// Defaults to UTC if not set or invalid.
+func LoadTimezone() *time.Location {
+	tz := strings.TrimSpace(os.Getenv("TIMEZONE"))
+	if tz == "" {
+		return time.UTC
+	}
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		log.Printf("WARNING: invalid TIMEZONE %q, falling back to UTC: %v", tz, err)
+		return time.UTC
+	}
+	return loc
 }

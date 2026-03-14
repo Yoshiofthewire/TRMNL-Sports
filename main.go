@@ -24,6 +24,8 @@ func main() {
 	}
 
 	espnClient := espn.NewClient(15 * time.Minute)
+	tz := config.LoadTimezone()
+	log.Printf("Timezone: %s", tz)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +46,7 @@ func main() {
 		}
 
 		sections := fetchAllSections(espnClient, activeSports)
-		markup := trmnl.RenderMarkup(sections)
+		markup := trmnl.RenderMarkup(sections, tz)
 
 		w.Header().Set("Content-Type", "application/json")
 		// Use SetEscapeHTML(false) so <, >, & are NOT escaped to \u003c etc.
